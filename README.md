@@ -10,7 +10,6 @@ Logs in the local Docker client to one or more Amazon ECR Private registries or 
 
 - [Example of Usage](#examples-of-usage)
   - [Building and pushing an image](#building-and-pushing-an-image)
-  - [Using an image as a service](#using-an-image-as-a-service)
 - [Credentials](#credentials)
   - [AWS credentials](#aws-credentials)
   - [Docker credentials](#docker-credentials)

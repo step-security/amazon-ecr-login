@@ -72211,7 +72211,7 @@ async function run() {
 
     // Notify customer if they don't have their password masked
     if (!maskPassword) {
-      warning('Your docker password is not masked. See https://github.com/aws-actions/amazon-ecr-login#docker-credentials ' +
+      warning('Your docker password is not masked. See https://github.com/step-security/amazon-ecr-login#docker-credentials ' +
         'for more information.')
     }
 
