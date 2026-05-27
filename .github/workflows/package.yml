@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+      - main
+
+name: Package
+
+jobs:
+  check:
+    name: Package distribution file
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        ref: main
+    - name: Package
+      run: |
+        npm ci
+        npm test
+        npm run package
