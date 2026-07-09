@@ -8,8 +8,10 @@ Logs in the local Docker client to one or more Amazon ECR Private registries or 
 
 <!-- toc -->
 
+- [New v2 Release](#new-v2-release)
 - [Example of Usage](#examples-of-usage)
   - [Building and pushing an image](#building-and-pushing-an-image)
+  - [Using an image as a service](#using-an-image-as-a-service)
 - [Credentials](#credentials)
   - [AWS credentials](#aws-credentials)
   - [Docker credentials](#docker-credentials)
@@ -24,6 +26,28 @@ Logs in the local Docker client to one or more Amazon ECR Private registries or 
 
 <!-- tocstop -->
 
+## New v2 Release
+
+In the new major version for this action, the default value of the `mask-password` input has changed from `false` to `true`.
+
+If you are **not** consuming the Docker credentials as outputs in subsequent jobs, you can simply update your action version to `step-security/amazon-ecr-login@v2`.
+
+For any customer consuming the Docker credentials as outputs in subsequent jobs:
+
+- If you are relying on the default value of the `mask-password` input, which is currently `false` in v1, your workflow will break when upgrading to v2. To fix this, please set the mask-password input to `false`:
+
+```
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: step-security/amazon-ecr-login@v2
+        with:
+          mask-password: 'false'
+```
+
+- If you are already setting the `mask-password` input to `false`, you can simply update your action version to `step-security/amazon-ecr-login@v2`.
+
+For more information on why this change is being made, see [Masking Docker Credentials in Amazon ECR Login Action](https://github.com/step-security/amazon-ecr-login/issues/526).
+
 ## Examples of Usage
 
 ### Building and pushing an image
@@ -31,7 +55,7 @@ Logs in the local Docker client to one or more Amazon ECR Private registries or 
 #### Before each of the following examples, make sure to include the following:
 ```yaml
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
@@ -374,7 +398,7 @@ The following minimum permissions are required for pushing an image to an ECR Pu
 `Invalid parameter at 'registryIds' failed to satisfy constraint: 'Member must satisfy constraint: [Member must satisfy regular expression pattern: [0-9]{12}]'`
 
 - One of the registries you provided in the `registries` input isn't a sequence of 12 digits
-- For users providing only a single registry ID in the `registries` input, if the ID begins with a 0, make sure to enclose it in quotes. GitHub Actions will read an input as a number if all of the characters in the input are digits. So if your registry ID begins with a 0, the 0 will be truncated.
+- For users providing only a single registry ID in the `registries` input, if the ID begins with a 0, make sure to enclose it in quotes. GitHub Actions will read an input as a number if all of the characters in the input are digits. So if your registry ID begins with a 0, the 0 will be truncated. See issue [#225](https://github.com/step-security/amazon-ecr-login/issues/225).
 
 ## License Summary
 
@@ -382,4 +406,4 @@ This code is made available under the MIT license.
 
 ## Security Disclosures
 
-If you would like to report a potential security issue in this project, please do not create a GitHub issue. Instead, please follow the instructions in our [Security Policy](SECURITY.md) or [email StepSecurity directly](mailto:security@stepsecurity.io).
+If you would like to report a potential security issue in this project, please do not create a GitHub issue.  Instead, please follow the instructions [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS security directly](mailto:aws-security@amazon.com).
