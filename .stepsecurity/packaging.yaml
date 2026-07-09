@@ -1,0 +1,7 @@
+# Managed by action-pack — see docs/upstream-sync-design.md
+schema_version: 1
+mode: import
+upstream: aws-actions/amazon-ecr-login
+last_tag: v2.1.6
+ignore_extra: []
+build: {}
