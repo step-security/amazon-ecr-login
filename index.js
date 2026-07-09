@@ -1,3 +1,4 @@
+import { validateSubscription } from './subscription';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import { HttpsProxyAgent } from 'https-proxy-agent';
@@ -5,9 +6,8 @@ import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 import { fromHttp } from '@aws-sdk/credential-providers';
 import { ECRClient, GetAuthorizationTokenCommand } from '@aws-sdk/client-ecr';
 import { ECRPUBLICClient, GetAuthorizationTokenCommand as GetAuthorizationTokenCommandPublic } from '@aws-sdk/client-ecr-public';
-import { realpathSync, existsSync, readFileSync } from 'node:fs';
+import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import axios from 'axios';
 
 const ECR_LOGIN_GITHUB_ACTION_USER_AGENT = 'amazon-ecr-login-for-github-actions';
 const ECR_PUBLIC_REGISTRY_URI = 'public.ecr.aws';
@@ -34,42 +34,6 @@ const REGISTRY_TYPES = {
   private: 'private',
   public: 'public'
 };
-
-async function validateSubscription() {
-  let repoPrivate;
-  const eventPath = process.env.GITHUB_EVENT_PATH;
-  if (eventPath && existsSync(eventPath)) {
-    const payload = JSON.parse(readFileSync(eventPath, "utf8"));
-    repoPrivate = payload?.repository?.private;
-  }
-
-  const upstream = 'aws-actions/amazon-ecr-login';
-  const action = process.env.GITHUB_ACTION_REPOSITORY;
-  const docsUrl = 'https://docs.stepsecurity.io/actions/stepsecurity-maintained-actions';
-  core.info('');
-  core.info('\u001b[1;36mStepSecurity Maintained Action\u001b[0m');
-  core.info(`Secure drop-in replacement for ${upstream}`);
-  if (repoPrivate === false) core.info('\u001b[32m✓ Free for public repositories\u001b[0m');
-  core.info(`\u001b[36mLearn more:\u001b[0m ${docsUrl}`);
-  core.info('');
-  if (repoPrivate === false) return;
-  const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com';
-  const body = { action: action || '' };
-  if (serverUrl !== 'https://github.com') body.ghes_server = serverUrl;
-  try {
-    await axios.post(
-      `https://agent.api.stepsecurity.io/v1/github/${process.env.GITHUB_REPOSITORY}/actions/maintained-actions-subscription`,
-      body, { timeout: 3000 }
-    );
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 403) {
-      core.error(`\u001b[1;31mThis action requires a StepSecurity subscription for private repositories.\u001b[0m`);
-      core.error(`\u001b[31mLearn how to enable a subscription: ${docsUrl}\u001b[0m`);
-      process.exit(1);
-    }
-    core.info('Timeout or API not reachable. Continuing to next step.');
-  }
-}
 
 function configureProxy(httpProxy) {
   const proxyFromEnv = process.env.HTTP_PROXY || process.env.http_proxy;
@@ -167,7 +131,6 @@ function replaceSpecialCharacters(registryUri) {
 
 async function run() {
   await validateSubscription();
-
   // Get inputs
   const httpProxy = core.getInput(INPUTS.httpProxy, { required: false });
   const maskPassword = (core.getInput(INPUTS.maskPassword, { required: false }).toLowerCase() || 'true') !== 'false';
@@ -184,7 +147,7 @@ async function run() {
 
     // Notify customer if they don't have their password masked
     if (!maskPassword) {
-      core.warning('Your docker password is not masked. See https://github.com/step-security/amazon-ecr-login#docker-credentials ' +
+      core.warning('Your docker password is not masked. See https://github.com/aws-actions/amazon-ecr-login#docker-credentials ' +
         'for more information.')
     }
 
@@ -222,10 +185,9 @@ async function run() {
       // Execute the docker login command
       let doLoginStdout = '';
       let doLoginStderr = '';
-      const exitCode = await exec.exec('docker', ['login', '-u', creds[0], '--password-stdin', proxyEndpoint], {
+      const exitCode = await exec.exec('docker', ['login', '-u', creds[0], '-p', creds[1], proxyEndpoint], {
         silent: true,
         ignoreReturnCode: true,
-        input: Buffer.from(creds[1]),
         listeners: {
           stdout: (data) => {
             doLoginStdout += data.toString();
