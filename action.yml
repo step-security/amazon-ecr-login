@@ -1,4 +1,5 @@
 name: 'Amazon ECR "Login" Action for GitHub Actions'
+author: step-security
 description: 'Logs in the local Docker client to one or more Amazon ECR Private registries or an Amazon ECR Public registry'
 branding:
   icon: 'cloud'
